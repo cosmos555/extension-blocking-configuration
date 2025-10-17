@@ -1,0 +1,50 @@
+# cloudbuild.yaml (Build와 Push 분리)
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _REGION: "asia-northeast3"
+  _REPO: "extensionblockingconfiguration"
+  _SERVICE: "extensionblockingconfiguration-svc"
+  # Cloud SQL 연결 설정
+  _CLOUD_SQL_CONNECTION: "project-c819ecf5-2c61-419c-98e:asia-northeast3:sql1"
+  # 데이터베이스 설정
+  _DB_USER: "user"
+  _DB_NAME: "app"
+  # DB 비밀번호는 Secret Manager에서 관리 
+  _DB_PASSWORD_SECRET: "secret1:latest"
+
+steps:
+# 1) Buildpacks 빌드
+- name: gcr.io/k8s-skaffold/pack
+  id: Build
+  args:
+    - build
+    - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/myapp:sha-${SHORT_SHA}
+    - --builder
+    - gcr.io/buildpacks/builder:google-24
+    - --path
+    - .
+  env:
+    - GOOGLE_RUNTIME=nodejs
+    - GOOGLE_RUNTIME_VERSION=nodejs20
+# 2) docker push
+- name: 'gcr.io/cloud-builders/docker'
+  id: Push
+  args:
+    - 'push'
+    - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/myapp:sha-${SHORT_SHA}'
+# 3) Cloud Run 배포
+- name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  id: Deploy
+  entrypoint: gcloud
+  args:
+    - run
+    - deploy
+    - ${_SERVICE}
+    - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/myapp:sha-${SHORT_SHA}
+    - --region=${_REGION}
+    - --allow-unauthenticated
+    - --add-cloudsql-instances=${_CLOUD_SQL_CONNECTION}
+    - --set-env-vars=DB_USER=${_DB_USER},DB_NAME=${_DB_NAME},DB_HOST=/cloudsql/${_CLOUD_SQL_CONNECTION}
+    - --set-secrets=DB_PASSWORD=${_DB_PASSWORD_SECRET}
