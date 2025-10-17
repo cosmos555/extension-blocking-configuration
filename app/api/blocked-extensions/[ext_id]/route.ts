@@ -2,18 +2,13 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { BlockedExtension } from '@/types';
 
-interface RouteContext {
-  params: {
-    ext_id: string;
-  };
-}
-
 export async function GET(
   request: Request,
-  { params }: RouteContext
+  { params }: { params: Promise<{ ext_id: string }> }
 ) {
   try {
-    const ext_id = parseInt(params.ext_id);
+    const { ext_id: ext_id_str } = await params;
+    const ext_id = parseInt(ext_id_str);
 
     if (isNaN(ext_id)) {
       return NextResponse.json(
@@ -50,10 +45,11 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: RouteContext
+  { params }: { params: Promise<{ ext_id: string }> }
 ) {
   try {
-    const ext_id = parseInt(params.ext_id);
+    const { ext_id: ext_id_str } = await params;
+    const ext_id = parseInt(ext_id_str);
 
     if (isNaN(ext_id)) {
       return NextResponse.json(
@@ -97,10 +93,11 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: RouteContext
+  { params }: { params: Promise<{ ext_id: string }> }
 ) {
   try {
-    const ext_id = parseInt(params.ext_id);
+    const { ext_id: ext_id_str } = await params;
+    const ext_id = parseInt(ext_id_str);
 
     if (isNaN(ext_id)) {
       return NextResponse.json(

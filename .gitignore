@@ -27,6 +27,7 @@
 *~
 /.claude
 CLAUDE.md
+BuildError.md
 
 # debug
 npm-debug.log*
