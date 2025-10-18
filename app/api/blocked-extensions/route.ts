@@ -6,15 +6,12 @@ export async function GET() {
   try {
     // blocked_extensions 테이블에서 모든 확장자 조회
     const results = await query<BlockedExtension[]>(
-      'SELECT * FROM blocked_extensions ORDER BY name ASC'
+      'SELECT * FROM blocked_extensions ORDER BY ext_id ASC'
     );
 
-    // name만 추출하여 배열로 변환
-    const extensionNames = results.map(row => row.name);
-
     const response: BlockedExtensionResponse = {
-      extensions: extensionNames,
-      count: extensionNames.length
+      extensions: results,
+      count: results.length
     };
 
     return NextResponse.json(response);

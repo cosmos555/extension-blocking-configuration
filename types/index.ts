@@ -7,6 +7,6 @@ export interface BlockedExtension {
 }
 
 export interface BlockedExtensionResponse {
-  extensions: string[];
+  extensions: BlockedExtension[];
   count: number;
 }
