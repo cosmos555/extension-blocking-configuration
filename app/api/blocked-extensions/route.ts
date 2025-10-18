@@ -43,16 +43,36 @@ export async function POST(request: Request) {
       );
     }
 
-    // INSERT 쿼리 실행
-    await query(
-      'INSERT INTO blocked_extensions (name, blocked) VALUES (?, ?)',
-      [name, blocked]
+    // name으로 기존 레코드 조회
+    const existing = await query<BlockedExtension[]>(
+      'SELECT ext_id, blocked FROM blocked_extensions WHERE name = ?',
+      [name]
     );
 
-    return NextResponse.json(
-      { message: 'Extension added successfully' },
-      { status: 201 }
-    );
+    if (existing.length > 0) {
+      // 기존 레코드가 있으면 blocked를 1로 업데이트
+      const ext_id = existing[0].ext_id;
+      await query(
+        'UPDATE blocked_extensions SET blocked = 1, updated_at = CURRENT_TIMESTAMP WHERE ext_id = ?',
+        [ext_id]
+      );
+
+      return NextResponse.json(
+        { ext_id, message: 'Extension updated successfully' },
+        { status: 200 }
+      );
+    } else {
+      // 신규 레코드 INSERT
+      const result: any = await query(
+        'INSERT INTO blocked_extensions (name, blocked) VALUES (?, ?)',
+        [name, blocked]
+      );
+
+      return NextResponse.json(
+        { ext_id: result.insertId, message: 'Extension added successfully' },
+        { status: 201 }
+      );
+    }
   } catch (error) {
     console.error('Failed to add blocked extension:', error);
 
